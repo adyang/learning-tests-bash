@@ -1,4 +1,14 @@
 #!/bin/bash
 
-ls -d **/* | entr ./run-tests
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)" || exit "$?"
+readonly SCRIPT_DIR
+
+grep --recursive --word-regexp --files-with-matches  \
+  --exclude-dir="${SCRIPT_DIR}/test/libs" \
+  --exclude=*.swp \
+  "${SCRIPT_DIR}" \
+  --regexp='#!/bin/bash' \
+  --regexp='#!/usr/bin/env bats' \
+  | entr "${SCRIPT_DIR}/run-tests" "$@"
+
 

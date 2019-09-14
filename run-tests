@@ -1,4 +1,13 @@
 #!/bin/bash
 
-./test/libs/bats-core/bin/bats ./test/*.bats
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)" || exit "$?"
+readonly SCRIPT_DIR
+
+if (( "$#" == 0 )); then
+  test_files=("${SCRIPT_DIR}/test"/*.bats)
+else
+  test_files=("$@")
+fi
+
+"${SCRIPT_DIR}/test/libs/bats-core/bin/bats" "${test_files[@]}"
 
