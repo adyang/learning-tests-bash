@@ -5,60 +5,65 @@ load 'libs/bats-assert/load'
 
 setup() {
   tmpdir="$(realpath "$(mktemp -d)")"
-  cat "${BATS_TEST_DIRNAME}/../script-dir" <(echo 'echo "${SCRIPT_DIR_DIRNAME_PWD}"') >"${tmpdir}/script"
-  chmod u+x "${tmpdir}/script"
-
-  tmpdir_symlink="${tmpdir}/symlink"
-  ln -s "${tmpdir}" "${tmpdir_symlink}"
-
-  mkdir "${tmpdir}/other"
-  ln -s "${tmpdir}/script" "${tmpdir}/other/script.symlink"
 }
 
 teardown() {
   rm -rf "${tmpdir}"
 }
 
-@test "[script-dir] via dirname pwd: full path execution" {
+@test "[script-dir-dirname-pwd] full path execution" {
+  create_test_script_symlinks 'script-dir-dirname-pwd'
+
   run "${tmpdir}/script"
 
   assert_output "${tmpdir}"
 }
 
-@test "[script-dir] via dirname pwd: cd script-dir and ./script execution" {
+@test "[script-dir-dirname-pwd] cd script-dir and ./script execution" {
+  create_test_script_symlinks 'script-dir-dirname-pwd'
+
   cd "${tmpdir}"
   run "./script"
 
   assert_output "${tmpdir}"
 }
 
-@test "[script-dir] via dirname pwd: source script" {
+@test "[script-dir-dirname-pwd] source script" {
+  create_test_script_symlinks 'script-dir-dirname-pwd'
+
   run source "${tmpdir}/script"
 
   assert_output "${tmpdir}"
 }
 
-@test "[script-dir] via dirname pwd: cd script-dir and bash script execution" {
+@test "[script-dir-dirname-pwd] cd script-dir and bash script execution" {
+  create_test_script_symlinks 'script-dir-dirname-pwd'
+
   cd "${tmpdir}"
   run bash 'script'
 
   assert_output "${tmpdir}"
 }
 
-@test "[script-dir] via dirname pwd: execution from directory symlink" {
+@test "[script-dir-dirname-pwd] execution from directory symlink" {
+  create_test_script_symlinks 'script-dir-dirname-pwd'
+
   run "${tmpdir_symlink}/script"
 
   assert_output "${tmpdir}"
 }
 
-@test "[script-dir] via dirname pwd: [UNSUPPORTED] script symlink execution" {
+@test "[script-dir-dirname-pwd] [UNSUPPORTED] script symlink execution" {
+  create_test_script_symlinks 'script-dir-dirname-pwd'
+
   run "${tmpdir}/other/script.symlink"
 
   refute_output "${tmpdir}"
   assert_output "${tmpdir}/other"
 }
 
-@test "[script-dir] via dirname pwd: dirname fails" {
+@test "[script-dir-dirname-pwd] dirname fails" {
+  create_test_script_symlinks 'script-dir-dirname-pwd'
   dirname() {
     return 1
   }
@@ -68,5 +73,18 @@ teardown() {
 
   assert_failure 1
   refute_output
+}
+
+create_test_script_symlinks() {
+  local script_name="$1"
+  cat "${BATS_TEST_DIRNAME}/../${script_name}" <(echo 'echo "${SCRIPT_DIR}"') >"${tmpdir}/script"
+  chmod u+x "${tmpdir}/script"
+
+  tmpdir_symlink="${tmpdir}/symlink"
+  ln -s "${tmpdir}" "${tmpdir_symlink}"
+
+  tmpdir_other="${tmpdir}/other"
+  mkdir "${tmpdir_other}"
+  ln -s "${tmpdir}/script" "${tmpdir_other}/script.symlink"
 }
 
