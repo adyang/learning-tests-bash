@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if hash greadlink 2>/dev/null; then
+  readlink() { greadlink "$@"; }
+fi
+
+readlink --canonicalize . &>/dev/null || { echo 'GNU readlink not found' >&2 && exit 127; }
+
+SCRIPT_PATH="$(readlink --canonicalize "${BASH_SOURCE[0]}")" || exit "$?"
+SCRIPT_DIR="$(dirname "${SCRIPT_PATH}")" || exit "$?"
+readonly SCRIPT_DIR
+

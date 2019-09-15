@@ -231,6 +231,117 @@ teardown() {
   assert_failure 127
 }
 
+@test "[script-dir-readlink] full path execution" {
+  create_test_script_symlinks 'script-dir-readlink'
+
+  run "${tmpdir}/script"
+
+  assert_output "${tmpdir}"
+}
+
+@test "[script-dir-readlink] cd script-dir and ./script execution" {
+  create_test_script_symlinks 'script-dir-readlink'
+
+  cd "${tmpdir}"
+  run "./script"
+
+  assert_output "${tmpdir}"
+}
+
+@test "[script-dir-readlink] source script" {
+  create_test_script_symlinks 'script-dir-readlink'
+
+  run source "${tmpdir}/script"
+
+  assert_output "${tmpdir}"
+}
+
+@test "[script-dir-readlink] cd script-dir and bash script execution" {
+  create_test_script_symlinks 'script-dir-readlink'
+
+  cd "${tmpdir}"
+  run bash 'script'
+
+  assert_output "${tmpdir}"
+}
+
+@test "[script-dir-readlink] execution from directory symlink" {
+  create_test_script_symlinks 'script-dir-readlink'
+
+  run "${tmpdir_symlink}/script"
+
+  assert_output "${tmpdir}"
+}
+
+@test "[script-dir-readlink] script symlink execution" {
+  create_test_script_symlinks 'script-dir-readlink'
+
+  run "${tmpdir}/other/script.symlink"
+
+  assert_output "${tmpdir}"
+}
+
+@test "[script-dir-readlink] readlink fails" {
+  create_test_script_symlinks 'script-dir-readlink'
+  hash() {
+    if [[ "$1" == 'greadlink' ]]; then
+      return 1
+    else
+      return 0
+    fi
+  }
+  readlink() {
+    if [[ "$*" == "--canonicalize ." ]]; then
+      return 0
+    else
+      return 1
+    fi
+  }
+  export -f hash readlink
+
+  run "${tmpdir}/script"
+
+  assert_failure 1
+  refute_output
+}
+
+@test "[script-dir-readlink] dirname fails" {
+  create_test_script_symlinks 'script-dir-readlink'
+  dirname() {
+    return 1
+  }
+  export -f dirname
+
+  run "${tmpdir}/script"
+
+  assert_failure 1
+  refute_output
+}
+
+@test "[script-dir-readlink] GNU readlink command not found" {
+  create_test_script_symlinks 'script-dir-readlink'
+  hash() {
+    if [[ "$1" == 'greadlink' ]]; then
+      return 1
+    else
+      return 0
+    fi
+  }
+  readlink() {
+    if [[ "$1" == '--canonicalize' ]]; then
+      return 1
+    else
+      return 0
+    fi
+  }
+  export -f hash readlink
+
+  run "${tmpdir}/script"
+
+  assert_failure 127
+  assert_output 'GNU readlink not found'
+}
+
 create_test_script_symlinks() {
   local script_name="$1"
   cat "${BATS_TEST_DIRNAME}/../${script_name}" <(echo 'echo "${SCRIPT_DIR}"') >"${tmpdir}/script"
