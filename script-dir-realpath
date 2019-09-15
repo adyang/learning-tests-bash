@@ -1,0 +1,9 @@
+#!/bin/bash
+
+require() { hash "$@" || exit 127; }
+require realpath
+
+SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]}")" || exit "$?"
+SCRIPT_DIR="$(dirname "${SCRIPT_PATH}")" || exit "$?"
+readonly SCRIPT_DIR
+

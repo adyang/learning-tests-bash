@@ -139,6 +139,98 @@ teardown() {
   refute_output
 }
 
+@test "[script-dir-realpath] full path execution" {
+  create_test_script_symlinks 'script-dir-realpath'
+
+  run "${tmpdir}/script"
+
+  assert_output "${tmpdir}"
+}
+
+@test "[script-dir-realpath] cd script-dir and ./script execution" {
+  create_test_script_symlinks 'script-dir-realpath'
+
+  cd "${tmpdir}"
+  run "./script"
+
+  assert_output "${tmpdir}"
+}
+
+@test "[script-dir-realpath] source script" {
+  create_test_script_symlinks 'script-dir-realpath'
+
+  run source "${tmpdir}/script"
+
+  assert_output "${tmpdir}"
+}
+
+@test "[script-dir-realpath] cd script-dir and bash script execution" {
+  create_test_script_symlinks 'script-dir-realpath'
+
+  cd "${tmpdir}"
+  run bash 'script'
+
+  assert_output "${tmpdir}"
+}
+
+@test "[script-dir-realpath] execution from directory symlink" {
+  create_test_script_symlinks 'script-dir-realpath'
+
+  run "${tmpdir_symlink}/script"
+
+  assert_output "${tmpdir}"
+}
+
+@test "[script-dir-realpath] script symlink execution" {
+  create_test_script_symlinks 'script-dir-realpath'
+
+  run "${tmpdir}/other/script.symlink"
+
+  assert_output "${tmpdir}"
+}
+
+@test "[script-dir-realpath] realpath fails" {
+  create_test_script_symlinks 'script-dir-realpath'
+  realpath() {
+    return 1
+  }
+  export -f realpath
+
+  run "${tmpdir}/script"
+
+  assert_failure 1
+  refute_output
+}
+
+@test "[script-dir-realpath] dirname fails" {
+  create_test_script_symlinks 'script-dir-realpath'
+  dirname() {
+    return 1
+  }
+  export -f dirname
+
+  run "${tmpdir}/script"
+
+  assert_failure 1
+  refute_output
+}
+
+@test "[script-dir-realpath] realpath command not found" {
+  create_test_script_symlinks 'script-dir-realpath'
+  hash() {
+    if [[ "$1" == 'realpath' ]]; then
+      return 1
+    else
+      return 0
+    fi
+  }
+  export -f hash
+
+  run "${tmpdir}/script"
+
+  assert_failure 127
+}
+
 create_test_script_symlinks() {
   local script_name="$1"
   cat "${BATS_TEST_DIRNAME}/../${script_name}" <(echo 'echo "${SCRIPT_DIR}"') >"${tmpdir}/script"
