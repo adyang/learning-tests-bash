@@ -75,6 +75,70 @@ teardown() {
   refute_output
 }
 
+@test "[script-dir-builtins] full path execution" {
+  create_test_script_symlinks 'script-dir-builtins'
+
+  run "${tmpdir}/script"
+
+  assert_output "${tmpdir}"
+}
+
+@test "[script-dir-builtins] cd script-dir and ./script execution" {
+  create_test_script_symlinks 'script-dir-builtins'
+
+  cd "${tmpdir}"
+  run "./script"
+
+  assert_output "${tmpdir}"
+}
+
+@test "[script-dir-builtins] source script" {
+  create_test_script_symlinks 'script-dir-builtins'
+
+  run source "${tmpdir}/script"
+
+  assert_output "${tmpdir}"
+}
+
+@test "[script-dir-builtins] cd script-dir and bash script execution" {
+  create_test_script_symlinks 'script-dir-builtins'
+
+  cd "${tmpdir}"
+  run bash 'script'
+
+  assert_output "${tmpdir}"
+}
+
+@test "[script-dir-builtins] execution from directory symlink" {
+  create_test_script_symlinks 'script-dir-builtins'
+
+  run "${tmpdir_symlink}/script"
+
+  assert_output "${tmpdir}"
+}
+
+@test "[script-dir-builtins] [UNSUPPORTED] script symlink execution" {
+  create_test_script_symlinks 'script-dir-builtins'
+
+  run "${tmpdir}/other/script.symlink"
+
+  refute_output "${tmpdir}"
+  assert_output "${tmpdir}/other"
+}
+
+@test "[script-dir-builtins] cd fails" {
+  create_test_script_symlinks 'script-dir-builtins'
+  cd() {
+    return 1
+  }
+  export -f cd
+
+  run "${tmpdir}/script"
+
+  assert_failure 1
+  refute_output
+}
+
 create_test_script_symlinks() {
   local script_name="$1"
   cat "${BATS_TEST_DIRNAME}/../${script_name}" <(echo 'echo "${SCRIPT_DIR}"') >"${tmpdir}/script"
